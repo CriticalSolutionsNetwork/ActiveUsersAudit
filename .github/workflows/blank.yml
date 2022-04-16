@@ -37,8 +37,6 @@ jobs:
           
       - name: Run PSScriptAnalyzer
         uses: microsoft/psscriptanalyzer-action@v1.0
-
-      - name: ps-docs
-        uses: microsoft/ps-docs@v0.1.0
         with:
-          outputPath: .ps-docs/
+          # Specifies the path to the scripts or module to be analyzed. Wildcard characters are supported.
+          path: /src/modules # default is .\

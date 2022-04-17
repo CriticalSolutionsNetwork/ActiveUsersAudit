@@ -208,7 +208,7 @@ function Send-AuditEmail {
     # From
     $from = [MimeKit.MailboxAddress]$from
     # Mail Account variable
-    $User = $usernam
+    $User = $username
     if ($pass) {
         # Set Credential to $Password parameter input. 
         $Credential = $pass

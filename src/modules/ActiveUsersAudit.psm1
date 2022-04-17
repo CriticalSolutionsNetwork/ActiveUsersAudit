@@ -64,24 +64,29 @@ function Get-ActiveUsersAudit {
         [securestring]$Password,
         [Parameter(
             Position = '2',
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$SMTPServer = "smtp.office365.com",        
+        [Parameter(
+            Position = '3',
             Mandatory = $true,
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$To,
         [Parameter(
-            Position = '3',
+            Position = '4',
             HelpMessage = "Defaults to Username",
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$From = $UserName,
         [Parameter(
-            Position = '4',
+            Position = '5',
             Mandatory = $true,
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$AttachementFolderPath = "C:\temp\ActiveUserAuditLogs",
         [Parameter(
-            Position = '5',
+            Position = '6',
             Mandatory = $true,
             ValueFromPipelineByPropertyName = $true
         )]
@@ -159,7 +164,7 @@ function Get-ActiveUsersAudit {
             Send Attachement using O365 email account and password. 
             Must exclude from conditional access legacy authentication policies.
             #> 
-            Send-AuditEmail -smtpServer "smtp.office365.com" -port "587" -usernam $Username `
+            Send-AuditEmail -smtpServer $SMTPServer -port "587" -usernam $Username `
                 -pass $Password -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
         }
         else {
@@ -167,7 +172,7 @@ function Get-ActiveUsersAudit {
         Send Attachement using O365 email account and Keyvault retrived password. 
         Must exclude email account from conditional access legacy authentication policies. 
         #>
-            Send-AuditEmail -smtpServer "smtp.office365.com" -port "587" -usernam $Username `
+            Send-AuditEmail -smtpServer $SMTPServer -port "587" -usernam $Username `
                 -url $uri -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
         }
         # Uninstall Installed Modules

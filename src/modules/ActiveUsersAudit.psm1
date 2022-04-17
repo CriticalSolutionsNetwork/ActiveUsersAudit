@@ -164,7 +164,7 @@ function Get-ActiveUsersAudit {
             Send Attachement using O365 email account and password. 
             Must exclude from conditional access legacy authentication policies.
             #> 
-            Send-AuditEmail -smtpServer $SMTPServer -port "587" -usernam $Username `
+            Send-AuditEmail -smtpServer $SMTPServer -port "587" -username $Username `
                 -pass $Password -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
         }
         else {
@@ -172,7 +172,7 @@ function Get-ActiveUsersAudit {
         Send Attachement using O365 email account and Keyvault retrived password. 
         Must exclude email account from conditional access legacy authentication policies. 
         #>
-            Send-AuditEmail -smtpServer $SMTPServer -port "587" -usernam $Username `
+            Send-AuditEmail -smtpServer $SMTPServer -port "587" -username $Username `
                 -url $uri -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
         }
         # Uninstall Installed Modules
@@ -188,7 +188,7 @@ function Send-AuditEmail {
     param (
         [string]$smtpServer,
         [int]$port,
-        [string]$usernam,
+        [string]$username,
         [switch]$ssl,
         [string]$url,
         [string]$from,
@@ -208,7 +208,7 @@ function Send-AuditEmail {
     # From
     $from = [MimeKit.MailboxAddress]$from
     # Mail Account variable
-    $User = $usernam
+    $User = $username
     if ($pass) {
         # Set Credential to $Password parameter input. 
         $Credential = $pass

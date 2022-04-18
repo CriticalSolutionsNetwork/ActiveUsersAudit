@@ -39,63 +39,99 @@ function Get-ActiveUsersAudit {
         Can take password as input into secure string instead of URI. 
         Adding the password parameter right after username when calling the function will trigger the correct parameterset. 
     #>
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Local')]
     param (
+        [Parameter( Position = '0', ParameterSetName = 'URL Key Vault')]
+        [Parameter( Position = '0', ParameterSetName = 'Password')]
         [Parameter(
             Position = '0',
+            ParameterSetName = 'Local',
+            HelpMessage = 'Enter output folder path',
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$AttachementFolderPath = "C:\temp\ActiveUserAuditLogs",
+        [Parameter( Position = '1', ParameterSetName = 'URL Key Vault')]
+        [Parameter( Position = '1', ParameterSetName = 'Password')]
+        [Parameter(
+            Position = '1',
+            ParameterSetName = 'Local',
+            HelpMessage = "Active Directory User Enabled or not",
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [bool]$Enabled = $true,
+        [Parameter( Position = '2', ParameterSetName = 'URL Key Vault')]
+        [Parameter( Position = '2', ParameterSetName = 'Password')]
+        [Parameter(
+            Position = '2',
+            HelpMessage = 'Days back to check for recent sign in',
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [int]$DaysInactive = "90",
+        [Parameter(Mandatory = $true, Position = '3', ParameterSetName = 'URL Key Vault')]
+        [Parameter(Mandatory = $true, Position = '3', ParameterSetName = 'Password')]
+        [Parameter(
+            Position = '3',
+            ParameterSetName = 'Local',
+            HelpMessage = "Activate Mail Parameters",
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [switch]$SendMailMessage,  
+        [Parameter(
+            Position = '4',
             Mandatory = $true,
-            HelpMessage = "UPN as in user@contoso.com",
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]
-        $UserName,
-        [Parameter(
-            Position = '1',
-            ParameterSetName = 'URL Key Vault',
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]$Uri,
-        [Parameter(
-            Position = '1',
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [securestring]$Password,
         [Parameter(
-            Position = '2',
+            Position = '4',
+            Mandatory = $true,
+            ParameterSetName = 'URL Key Vault',
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$Uri,
+        [Parameter(Mandatory = $true, Position = '5', ParameterSetName = 'URL Key Vault')]
+        [Parameter(
+            Position = '5',
+            Mandatory = $true,
+            ParameterSetName = 'Password',
+            HelpMessage = "UPN as in user@contoso.com",
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$UserName,
+        [Parameter(ParameterSetName = 'URL Key Vault')]
+        [Parameter(
+            ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$SMTPServer = "smtp.office365.com",
+        [Parameter(ParameterSetName = 'URL Key Vault')]
         [Parameter(
-            Position = '3',
+            ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
-        [int]$Port = "587",        
+        [int]$Port = "587",
+        [Parameter(Mandatory = $true, ParameterSetName = 'URL Key Vault')]
         [Parameter(
-            Position = '4',
             Mandatory = $true,
+            ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$To,
+        [Parameter(ParameterSetName = 'URL Key Vault')]
         [Parameter(
-            Position = '5',
             HelpMessage = "Defaults to Username",
+            ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$From = $UserName,
         [Parameter(
-            Position = '6',
-            Mandatory = $true,
+            HelpMessage = "Cleans up modules",
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$AttachementFolderPath = "C:\temp\ActiveUserAuditLogs",
-        [Parameter(
-            Position = '7',
-            Mandatory = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [int]$DaysInactive = "90"
+        [switch]$Clean
+
+
     )
     Begin {
         # Check for admin and throw exception if not running elevated.
@@ -120,18 +156,20 @@ function Get-ActiveUsersAudit {
         }
         # Begin Logging
         Start-Transcript -OutputDirectory $DirPath -IncludeInvocationHeader -NoClobber
+        if ($SendMailMessage) {
+            # Install / Import required modules.
+            $module = Get-Module -Name Send-MailKitMessage -ListAvailable
+            if (-not $module) {
+                Install-Module -Name Send-MailKitMessage -AllowPrerelease -Scope AllUsers -Force
+            }
+            try {
+                Import-Module "Send-MailKitMessage" -Global
+            }
+            catch {
+                throw "The Module Was not installed. Use `"Save-Module -Name Send-MailKitMessage -AllowPrerelease -Path C:\temp`" on another Windows Machine."
+            }
+        }
 
-        # Install / Import required modules.
-        $module = Get-Module -Name Send-MailKitMessage -ListAvailable
-        if (-not $module) {
-            Install-Module -Name Send-MailKitMessage -AllowPrerelease -Scope AllUsers -Force
-        }
-        try {
-            Import-Module "Send-MailKitMessage" -Global
-        }
-        catch {
-            throw "The Module Was not installed. Use `"Save-Module -Name Send-MailKitMessage -AllowPrerelease -Path C:\temp`" on another Windows Machine."
-        }
     }
 
     Process {
@@ -142,10 +180,10 @@ function Get-ActiveUsersAudit {
         $time = (Get-Date).Adddays( - ($DaysInactive))
 
         # Add Datetime to filename
-        $csv = "$($csvPath).$((Get-Date).ToString('yyyy-MM-dd.hh.mm'))" 
+        $csv = "$($csvPath).$((Get-Date).ToString('yyyy-MM-dd.hh.mm.ss'))" 
     
         # Audit Script with export to csv and zip. Paramters for Manager, lastLogonTimestamp and DistinguishedName normalized.
-        Get-aduser -Filter { LastLogonTimeStamp -lt $time -and Enabled -eq $true } -Properties `
+        Get-aduser -Filter { LastLogonTimeStamp -lt $time -and Enabled -eq $Enabled } -Properties `
             GivenName, Surname, Mail, UserPrincipalName, Title, OfficePhone, MobilePhone, Description, Manager, lastlogontimestamp, samaccountname, DistinguishedName   | `
             Select-Object `
         @{N = 'FirstName'; E = { $_.GivenName } }, `
@@ -158,34 +196,53 @@ function Get-ActiveUsersAudit {
         @{N = 'MobilePhone'; E = { $_.MobilePhone } }, `
         @{N = 'NoteEquipment'; E = { $_.Description } }, `
         @{N = 'Manager'; E = { (Get-ADUser ($_.Manager)).name } }, `
-        @{N = "Stamp"; E = { [DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd.hh.mm') } }, `
+        @{N = "Last Sign-in"; E = { [DateTime]::FromFileTime($_.lastLogonTimestamp).ToString('yyyy-MM-dd.hh.mm') } }, `
         @{N = 'OrgUnit'; E = { $($_.DistinguishedName.split(',', 2)[1]) } } `
         | Export-CSV -Path "$csv.csv" -NoTypeInformation
         Compress-Archive -Path "$csv.csv" -DestinationPath "$csv.zip"
     }
     End {
-        if ($Password) {
-            <# 
-            Send Attachement using O365 email account and password. 
-            Must exclude from conditional access legacy authentication policies.
-            #> 
-            Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
-                -pass $Password -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
+        if ($SendMailMessage) {
+            if ($Password) {
+                <# 
+                Send Attachement using O365 email account and password. 
+                Must exclude from conditional access legacy authentication policies.
+                #> 
+                Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
+                    -pass $Password -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
+            } # End if
+            else {
+                <#
+                Send Attachement using O365 email account and Keyvault retrived password. 
+                Must exclude email account from conditional access legacy authentication policies. 
+                #>
+                Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
+                    -url $uri -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
+            }   # End Else
         }
-        else {
-            <#
-        Send Attachement using O365 email account and Keyvault retrived password. 
-        Must exclude email account from conditional access legacy authentication policies. 
-        #>
-            Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
-                -url $uri -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
+
+        if ($Clean) {
+            try {
+                # Remove Modules
+                Remove-Module -Name "Send-MailKitMessage" -Force -Confirm:$false `
+                    -ErrorAction SilentlyContinue -ErrorVariable RemoveModErr
+            }
+            catch {
+                Write-Output $RemoveModErr -Verbose
+            }
+            
+            try {
+                # Uninstall Modules 
+                Uninstall-Module -Name "Send-MailKitMessage" -AllowPrerelease -Force -Confirm:$false `
+                    -ErrorAction SilentlyContinue -ErrorVariable UninstallModErr          
+            }
+            catch {
+                Write-Output $UninstallModErr -Verbose
+            }
         }
-        # Uninstall Installed Modules
-        Remove-Module -Name "Send-MailKitMessage" -Force -Confirm:$false
-        # Need to correct logic to uninstall module. 
-        Uninstall-Module -Name "Send-MailKitMessage" -AllowPrerelease -Force -Confirm:$false
         # End Logging
-        Stop-Transcript
+        Stop-Transcript        
+        
     }
 }
 

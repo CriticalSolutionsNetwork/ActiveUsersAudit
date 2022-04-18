@@ -10,7 +10,7 @@ function Get-ActiveUsersAudit {
         PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Uri "https://<instance>.azurewebsites.net/api/HttpTrigger1?code=<Personal URL CODE>&clientId=<FunctionHTMLName>" -To "support@domain.com" -Verbose
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Password "Password" -To "support@domain.com" -Verbose
-        .PARAMETER UserName
+    .PARAMETER UserName
         Specify the account with an active mailbox and MFA disabled. 
         Ensure the account has delegated access for Send On Behalf for any 
         UPN set in the "$From" Parameter

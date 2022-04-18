@@ -106,6 +106,7 @@ function Get-ActiveUsersAudit {
             HelpMessage = "UPN as in user@contoso.com",
             ValueFromPipelineByPropertyName = $true
         )]
+        [ValidatePattern("[a-z0-9!#\$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#\$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")]
         [string]$UserName,
         [Parameter(ParameterSetName = 'URL Key Vault')]
         [Parameter(
@@ -125,6 +126,7 @@ function Get-ActiveUsersAudit {
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
+        [ValidatePattern("[a-z0-9!#\$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#\$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")]
         [string]$To,
         [Parameter(ParameterSetName = 'URL Key Vault')]
         [Parameter(
@@ -132,6 +134,7 @@ function Get-ActiveUsersAudit {
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
+        [ValidatePattern("[a-z0-9!#\$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#\$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")]
         [string]$From = $UserName,
         [Parameter(
             HelpMessage = "Cleans up modules",

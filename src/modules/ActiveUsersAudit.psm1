@@ -5,10 +5,12 @@ function Get-ActiveUsersAudit {
     .DESCRIPTION
         Audit's Active Directory taking "days" as the input for how far back to check for a last sign in. 
     .EXAMPLE
-        PS C:\> Get-ActiveUsersAudit -UserName "helpdesk@domain.com" -Uri "https://<instance>.azurewebsites.net/api/HttpTrigger1?code=<Personal URL CODE>&clientId=<FunctionHTMLName>" -To "support@domain.com" -From "helpdesk@domain.com" -AttachementFolderPath "C:\temp" -DaysInactive 90 -Verbose
+        PS C:\> Get-ActiveUsersAudit -Verbose
     .EXAMPLE
-        PS C:\> Get-ActiveUsersAudit -UserName "helpdesk@domain.com" -Password "<Clear-Text String>" -To "support@domain.com" -From "helpdesk@domain.com" -AttachementFolderPath "C:\temp" -DaysInactive 90 -Verbose
-    .PARAMETER UserName
+        PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Uri "https://<instance>.azurewebsites.net/api/HttpTrigger1?code=<Personal URL CODE>&clientId=<FunctionHTMLName>" -To "support@domain.com" -Verbose
+    .EXAMPLE
+        PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Password "Password" -To "support@domain.com" -Verbose
+        .PARAMETER UserName
         Specify the account with an active mailbox and MFA disabled. 
         Ensure the account has delegated access for Send On Behalf for any 
         UPN set in the "$From" Parameter
@@ -31,10 +33,14 @@ function Get-ActiveUsersAudit {
         Defaults to 90 days in the past. 
         Specifies how far back to look for accounts last logon. 
         If logon is within 90 days, it won't be included. 
-    .INPUTS
-        Inputs (if any)
-    .OUTPUTS
-        Output (if any)
+    .PARAMETER SMTPServer
+        Defaults to Office 365 SMTP relay. Enter optional relay here.
+    .PARAMETER Port
+        SMTP Port to Relay
+    .PARAMETER Clean
+        Remove installed modules during run.
+    .PARAMETER SendMailMessage
+        Adds parameters for sending Audit Report as an Email. 
     .NOTES
         Can take password as input into secure string instead of URI. 
         Adding the password parameter right after username when calling the function will trigger the correct parameterset. 

@@ -33,6 +33,8 @@ function Get-ActiveUsersAudit {
         Defaults to 90 days in the past. 
         Specifies how far back to look for accounts last logon. 
         If logon is within 90 days, it won't be included. 
+    .PARAMETER Enabled
+        Choose to search for either enabled or disabled Active Directory Users (IE: $true or $false)
     .PARAMETER SMTPServer
         Defaults to Office 365 SMTP relay. Enter optional relay here.
     .PARAMETER Port

@@ -119,6 +119,7 @@ function Get-ActiveUsersAudit {
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
+        [ValidateSet("993","587","25")]
         [int]$Port = "587",
         [Parameter(Mandatory = $true, ParameterSetName = 'URL Key Vault')]
         [Parameter(
@@ -211,6 +212,10 @@ function Get-ActiveUsersAudit {
         @{N = 'OrgUnit'; E = { $($_.DistinguishedName.split(',', 2)[1]) } } `
         | Export-CSV -Path "$csv.csv" -NoTypeInformation
         Compress-Archive -Path "$csv.csv" -DestinationPath "$csv.zip"
+        
+        #Confirm output path to console.
+        Write-Output "The archive have been saved to: `n" 
+        Write-Output "$csv.zip"
     }
     End {
         if ($SendMailMessage) {

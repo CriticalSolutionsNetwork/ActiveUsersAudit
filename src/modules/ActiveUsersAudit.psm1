@@ -292,9 +292,12 @@ function Send-AuditEmail {
         $Credential = $pass
     }
     else {
+        
         # Retrieve credentials from function app url into a SecureString.
+        $a,$b = (Invoke-RestMethod $url).split(',')
+        $c = $b.split('')
         $Credential = `
-            [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String "$(Invoke-RestMethod -Uri $url)" -AsPlainText -Force))
+            [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $c) )
     }
     
     # Create Parameter hashtable

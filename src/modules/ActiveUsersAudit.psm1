@@ -313,5 +313,5 @@ function Send-AuditEmail {
         "AttachmentList"                 = $AttachmentList
     }
     Send-MailKitMessage @Parameters
-    $Credential = ""
+    Clear-Variable -Name "a","b","c","Credential"
 }

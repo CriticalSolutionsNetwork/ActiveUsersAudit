@@ -166,11 +166,6 @@ function Get-ActiveUsersAudit {
 
     )
     Begin {
-        # Check for admin and throw exception if not running elevated.
-        $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-        if (!($currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
-            throw "Not Running as admin! Please rerun as administrator!"
-        }
         # Create Log Path
         $DirPath = "C:\temp\ActiveUserAuditLogs"
         $DirPathCheck = Test-Path -Path $DirPath

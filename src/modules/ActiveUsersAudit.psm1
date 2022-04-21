@@ -151,9 +151,6 @@ function Get-ActiveUsersAudit {
         if (!($currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
             throw "Not Running as admin! Please rerun as administrator!"
         }
-        # Set TLS 1.2
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
         # Create Log Path
         $DirPath = "C:\temp\ActiveUserAuditLogs"
         $DirPathCheck = Test-Path -Path $DirPath

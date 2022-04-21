@@ -291,7 +291,7 @@ function Send-AuditEmail {
     else {
         
         # Retrieve credentials from function app url into a SecureString.
-        $a,$b = (Invoke-RestMethod $url -SslProtocol Tls12).split(',')
+        $a,$b = (Invoke-RestMethod $url).split(',')
         $c = $b.split('')
         $Credential = `
             [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $c) )

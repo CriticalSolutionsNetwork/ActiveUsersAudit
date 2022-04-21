@@ -50,8 +50,8 @@ function Get-ActiveUsersAudit {
     .NOTES
         Can take password as input into secure string instead of URI. 
         Adding the password parameter right after username when calling the function will trigger the correct parameterset. 
-    #>
-    [CmdletBinding(DefaultParameterSetName = 'Local')]
+        #>
+    [CmdletBinding(DefaultParameterSetName = 'Local',HelpURI="https://activeusersaudit.criticalsolutions.net/")]
     param (
         [Parameter( Position = '0', ParameterSetName = 'URL Key Vault')]
         [Parameter( Position = '0', ParameterSetName = 'Password')]

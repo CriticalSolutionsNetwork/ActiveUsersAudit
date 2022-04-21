@@ -273,7 +273,7 @@ function Get-ActiveUsersAudit {
                 Write-Output $UninstallModErr -Verbose
             }
         }
-        Clear-Variable -Name "Function","FunctionApp","Credential","token","Username","Port","from","to","ApiToken" -Scope Local
+        Clear-Variable -Name "Function","FunctionApp","Credential","token","Username","Port","from","to","ApiToken" -Scope Local -ErrorAction SilentlyContinue
         # End Logging
         Stop-Transcript        
         
@@ -332,5 +332,5 @@ function Send-AuditEmail {
         "AttachmentList"                 = $AttachmentList
     }
     Send-MailKitMessage @Parameters
-    Clear-Variable -Name "a","b","Credential","token" -Scope Local
+    Clear-Variable -Name "a","b","Credential","token" -Scope Local -ErrorAction SilentlyContinue
 }

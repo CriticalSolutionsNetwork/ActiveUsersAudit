@@ -7,15 +7,19 @@ function Get-ActiveUsersAudit {
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -Verbose
     .EXAMPLE
-        PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Uri "https://<instance>.azurewebsites.net/api/HttpTrigger1?code=<Personal URL CODE>&clientId=<FunctionHTMLName>" -To "support@domain.com" -Verbose
+        PS C:\> Get-ActiveUsersAudit -SendMailMessage -FunctionApp "<FunctionAppName>" -Function "<FunctionHttpTriggerName>" -ApiToken "<APIKEY>" -UserName "helpdesk@domain.com" -To "support@domain.com" -Verbose
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Password "Password" -To "support@domain.com" -Verbose
     .PARAMETER UserName
         Specify the account with an active mailbox and MFA disabled. 
         Ensure the account has delegated access for Send On Behalf for any 
         UPN set in the "$From" Parameter
-    .PARAMETER Uri
-        Function App URL for specific customer or department needing access to the key.
+    .PARAMETER FunctionApp
+        Azure Function App Name.
+    .PARAMETER Function
+        Azure Function App's Function Name. Ex. "HttpResponse1"
+    .PARAMETER ApiToken
+        Private Function Key
     .PARAMETER Password
         Use this parameter to active the parameterset associated with using a clear-text
         password instead of a function URI.
@@ -269,6 +273,7 @@ function Get-ActiveUsersAudit {
                 Write-Output $UninstallModErr -Verbose
             }
         }
+        Clear-Variable -Name "Function","FunctionApp","Credential","token","Username","Port","from","to","ApiToken" -Scope Local
         # End Logging
         Stop-Transcript        
         
@@ -310,9 +315,8 @@ function Send-AuditEmail {
         $url = "https://$($FunctionApp).azurewebsites.net/api/$($Function)"
         # Retrieve credentials from function app url into a SecureString.
         $a,$b = (Invoke-RestMethod $url -Headers @{ 'x-functions-key' = "$token" }).split(',')
-        $c = $b.split('')
         $Credential = `
-            [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $c) )
+            [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $b.split('')) )
     }
     
     # Create Parameter hashtable
@@ -328,5 +332,5 @@ function Send-AuditEmail {
         "AttachmentList"                 = $AttachmentList
     }
     Send-MailKitMessage @Parameters
-    Clear-Variable -Name "a","b","c","Credential"
+    Clear-Variable -Name "a","b","Credential","token" -Scope Local
 }

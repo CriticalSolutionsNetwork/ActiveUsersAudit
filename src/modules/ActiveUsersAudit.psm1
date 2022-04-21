@@ -7,15 +7,19 @@ function Get-ActiveUsersAudit {
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -Verbose
     .EXAMPLE
-        PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Uri "https://<instance>.azurewebsites.net/api/HttpTrigger1?code=<Personal URL CODE>&clientId=<FunctionHTMLName>" -To "support@domain.com" -Verbose
+        PS C:\> Get-ActiveUsersAudit -SendMailMessage -FunctionApp "<FunctionAppName>" -Function "<FunctionHttpTriggerName>" -ApiToken "<APIKEY>" -UserName "helpdesk@domain.com" -To "support@domain.com" -Verbose
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Password "Password" -To "support@domain.com" -Verbose
     .PARAMETER UserName
         Specify the account with an active mailbox and MFA disabled. 
         Ensure the account has delegated access for Send On Behalf for any 
         UPN set in the "$From" Parameter
-    .PARAMETER Uri
-        Function App URL for specific customer or department needing access to the key.
+    .PARAMETER FunctionApp
+        Azure Function App Name.
+    .PARAMETER Function
+        Azure Function App's Function Name. Ex. "HttpResponse1"
+    .PARAMETER ApiToken
+        Private Function Key
     .PARAMETER Password
         Use this parameter to active the parameterset associated with using a clear-text
         password instead of a function URI.
@@ -97,8 +101,20 @@ function Get-ActiveUsersAudit {
             ParameterSetName = 'URL Key Vault',
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$Uri,
-        [Parameter(Mandatory = $true, Position = '5', ParameterSetName = 'URL Key Vault')]
+        [string]$FunctionApp,
+        [Parameter(
+            Position = '5',
+            Mandatory = $true,
+            ParameterSetName = 'URL Key Vault',
+            ValueFromPipelineByPropertyName = $true
+        )][string]$Function,
+        [Parameter(
+            Position = '6',
+            Mandatory = $true,
+            ParameterSetName = 'URL Key Vault',
+            ValueFromPipelineByPropertyName = $true
+        )][string]$ApiToken,
+        [Parameter(Mandatory = $true, Position = '7', ParameterSetName = 'URL Key Vault')]
         [Parameter(
             Position = '5',
             Mandatory = $true,
@@ -108,29 +124,33 @@ function Get-ActiveUsersAudit {
         )]
         [ValidatePattern("[a-z0-9!#\$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#\$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")]
         [string]$UserName,
-        [Parameter(ParameterSetName = 'URL Key Vault')]
+        [Parameter(Position = '8', ParameterSetName = 'URL Key Vault')]
         [Parameter(
+            Position = '6',
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$SMTPServer = "smtp.office365.com",
-        [Parameter(ParameterSetName = 'URL Key Vault')]
+        [Parameter(Position = '9', ParameterSetName = 'URL Key Vault')]
         [Parameter(
+            Position = '7',
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [ValidateSet("993","587","25")]
         [int]$Port = "587",
-        [Parameter(Mandatory = $true, ParameterSetName = 'URL Key Vault')]
+        [Parameter(Position = '10', Mandatory = $true, ParameterSetName = 'URL Key Vault')]
         [Parameter(
+            Position = '8',
             Mandatory = $true,
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
         [ValidatePattern("[a-z0-9!#\$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#\$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")]
         [string]$To,
-        [Parameter(ParameterSetName = 'URL Key Vault')]
+        [Parameter(Position = '11', ParameterSetName = 'URL Key Vault')]
         [Parameter(
+            Position = '9',
             HelpMessage = "Defaults to Username",
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
@@ -230,7 +250,7 @@ function Get-ActiveUsersAudit {
                 Must exclude email account from conditional access legacy authentication policies. 
                 #>
                 Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
-                    -url $uri -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
+                -Function $Function -FunctionApp $FunctionApp -token $ApiToken -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
             }   # End Else
         }
 
@@ -253,6 +273,7 @@ function Get-ActiveUsersAudit {
                 Write-Output $UninstallModErr -Verbose
             }
         }
+        Clear-Variable -Name "Function","FunctionApp","Credential","token","Username","Port","from","to","ApiToken" -Scope Local
         # End Logging
         Stop-Transcript        
         
@@ -265,13 +286,15 @@ function Send-AuditEmail {
         [int]$port,
         [string]$username,
         [switch]$ssl,
-        [string]$url,
         [string]$from,
         [string]$to,
         [string]$subject = "Active User Audit for $($env:USERDNSDOMAIN)",
         [string]$attachmentfilePath,
         [string]$body = "Audit done on $(Get-Date). Attachment file: $attachmentfilePath",
-        [securestring]$pass
+        [securestring]$pass,
+        [string]$Function,
+        [string]$FunctionApp,
+        [string]$token
     )
     Import-Module Send-MailKitMessage
     # Recipient
@@ -289,12 +312,11 @@ function Send-AuditEmail {
         $Credential = $pass
     }
     else {
-        
+        $url = "https://$($FunctionApp).azurewebsites.net/api/$($Function)"
         # Retrieve credentials from function app url into a SecureString.
-        $a,$b = (Invoke-RestMethod $url).split(',')
-        $c = $b.split('')
+        $a,$b = (Invoke-RestMethod $url -Headers @{ 'x-functions-key' = "$token" }).split(',')
         $Credential = `
-            [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $c) )
+            [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $b.split('')) )
     }
     
     # Create Parameter hashtable
@@ -310,5 +332,5 @@ function Send-AuditEmail {
         "AttachmentList"                 = $AttachmentList
     }
     Send-MailKitMessage @Parameters
-    Clear-Variable -Name "a","b","c","Credential"
+    Clear-Variable -Name "a","b","Credential","token" -Scope Local
 }

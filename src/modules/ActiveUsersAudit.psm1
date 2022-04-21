@@ -151,9 +151,6 @@ function Get-ActiveUsersAudit {
         if (!($currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
             throw "Not Running as admin! Please rerun as administrator!"
         }
-        # Set TLS 1.2
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
         # Create Log Path
         $DirPath = "C:\temp\ActiveUserAuditLogs"
         $DirPathCheck = Test-Path -Path $DirPath
@@ -294,7 +291,7 @@ function Send-AuditEmail {
     else {
         
         # Retrieve credentials from function app url into a SecureString.
-        $a,$b = (Invoke-RestMethod $url).split(',')
+        $a,$b = (Invoke-RestMethod $url -SslProtocol Tls12).split(',')
         $c = $b.split('')
         $Credential = `
             [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $c) )

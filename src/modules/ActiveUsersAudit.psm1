@@ -273,7 +273,7 @@ function Get-ActiveUsersAudit {
                 Write-Output $UninstallModErr -Verbose
             }
         }
-        Clear-Variable -Name "Function","FunctionApp","Credential","token","Username","Port","from","to","ApiToken" -Scope Local -ErrorAction SilentlyContinue
+        Clear-Variable -Name "Function","FunctionApp","Password","ApiToken" -Scope Local -ErrorAction SilentlyContinue
         # End Logging
         Stop-Transcript        
         

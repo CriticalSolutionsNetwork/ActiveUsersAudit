@@ -70,7 +70,7 @@ function Get-ActiveUsersAudit {
             HelpMessage = "Active Directory User Enabled or not",
             ValueFromPipelineByPropertyName = $true
         )]
-        [bool]$Enabled = $false,
+        [bool]$Enabled = $true,
         [Parameter( Position = '2', ParameterSetName = 'URL Key Vault')]
         [Parameter( Position = '2', ParameterSetName = 'Password')]
         [Parameter(

@@ -7,36 +7,36 @@ function Get-ActiveUsersAudit {
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -Verbose
     .EXAMPLE
-        PS C:\> Get-ActiveUsersAudit -SendMailMessage -FunctionApp "<FunctionAppName>" -Function "<FunctionHttpTriggerName>" -ApiToken "<APIKEY>" -UserName "helpdesk@domain.com" -To "support@domain.com" -Verbose
+        PS C:\> Get-ActiveUsersAudit -SendMailMessage -FunctionApp "<FunctionAppName>" -Function "<HttpTriggerName>" -ApiToken "<ApiKey>" -UserName "helpdesk@domain.com" -To "support@domain.com" -Verbose
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -SendMailMessage -UserName "helpdesk@domain.com" -Password "Password" -To "support@domain.com" -Verbose
     .PARAMETER UserName
-        Specify the account with an active mailbox and MFA disabled. 
-        Ensure the account has delegated access for Send On Behalf for any 
+        Specify the account with an active mailbox and MFA disabled.
+        Ensure the account has delegated access for Send On Behalf for any
         UPN set in the "$From" Parameter
     .PARAMETER FunctionApp
         Azure Function App Name.
     .PARAMETER Function
-        Azure Function App's Function Name. Ex. "HttpResponse1"
+        Azure Function App's Function Name. Ex. "HttpTrigger1"
     .PARAMETER ApiToken
         Private Function Key
     .PARAMETER Password
         Use this parameter to active the parameterset associated with using a clear-text
         password instead of a function URI.
     .PARAMETER To
-        Recipient of the attachment outputs. 
+        Recipient of the attachment outputs.
     .PARAMETER From
-        Defaults to the same account as $UserName unless the parameter is set.  
-        The email will appear as it was sent from the UPN listed here. 
+        Defaults to the same account as $UserName unless the parameter is set.
+        The email will appear as it was sent from the UPN listed here.
         Ensure the Account stated in the $UserName has delegated access to send
-        on behalf of the account you add to the $From parameter. 
+        on behalf of the account you add to the $From parameter.
     .PARAMETER AttachementFolderPath
         Default path is C:\temp\ActiveUserAuditLogs.
         This is the folder where attachments are going to be saved.
     .PARAMETER DaysInactive
-        Defaults to 90 days in the past. 
-        Specifies how far back to look for accounts last logon. 
-        If logon is within 90 days, it won't be included. 
+        Defaults to 90 days in the past.
+        Specifies how far back to look for accounts last logon.
+        If logon is within 90 days, it won't be included.
     .PARAMETER Enabled
         Choose to search for either enabled or disabled Active Directory Users (IE: $true or $false)
     .PARAMETER SMTPServer
@@ -46,12 +46,12 @@ function Get-ActiveUsersAudit {
     .PARAMETER Clean
         Remove installed modules during run.
     .PARAMETER SendMailMessage
-        Adds parameters for sending Audit Report as an Email. 
+        Adds parameters for sending Audit Report as an Email.
     .NOTES
-        Can take password as input into secure string instead of URI. 
-        Adding the password parameter right after username when calling the function will trigger the correct parameterset. 
+        Can take password as input into secure string instead of URI.
+        Adding the password parameter right after username when calling the function will trigger the correct parameterset.
         #>
-    [CmdletBinding(DefaultParameterSetName = 'Local',HelpURI="https://activeusersaudit.criticalsolutions.net/")]
+    [CmdletBinding(DefaultParameterSetName = 'Local', HelpURI = "https://activeusersaudit.criticalsolutions.net/")]
     param (
         [Parameter( Position = '0', ParameterSetName = 'URL Key Vault')]
         [Parameter( Position = '0', ParameterSetName = 'Password')]
@@ -87,7 +87,7 @@ function Get-ActiveUsersAudit {
             HelpMessage = "Activate Mail Parameters",
             ValueFromPipelineByPropertyName = $true
         )]
-        [switch]$SendMailMessage,  
+        [switch]$SendMailMessage,
         [Parameter(
             Position = '4',
             Mandatory = $true,
@@ -137,7 +137,7 @@ function Get-ActiveUsersAudit {
             ParameterSetName = 'Password',
             ValueFromPipelineByPropertyName = $true
         )]
-        [ValidateSet("993","587","25")]
+        [ValidateSet("993", "587", "25")]
         [int]$Port = "587",
         [Parameter(Position = '10', Mandatory = $true, ParameterSetName = 'URL Key Vault')]
         [Parameter(
@@ -162,8 +162,6 @@ function Get-ActiveUsersAudit {
             ValueFromPipelineByPropertyName = $true
         )]
         [switch]$Clean
-
-
     )
     Begin {
         # Create Log Path
@@ -193,18 +191,14 @@ function Get-ActiveUsersAudit {
                 throw "The Module Was not installed. Use `"Save-Module -Name Send-MailKitMessage -AllowPrerelease -Path C:\temp`" on another Windows Machine."
             }
         }
-
     }
-
     Process {
         # Create CSV Path Prefix
-        $csvPath = "$attachementfolderpath\AD_Export_$($env:USERDNSDOMAIN)"
-        
+        $csvPath = "$attachementfolderpath\AD_Export_$($env:USERDNSDOMAIN)"      
         # Establish timeframe to review.  
         $time = (Get-Date).Adddays( - ($DaysInactive))
-
         # Add Datetime to filename
-        $csv = "$($csvPath).$((Get-Date).ToString('yyyy-MM-dd.hh.mm.ss'))" 
+        $csv = "$($csvPath).$((Get-Date).ToString('yyyy-MM-dd.hh.mm.ss'))"
     
         # Audit Script with export to csv and zip. Paramters for Manager, lastLogonTimestamp and DistinguishedName normalized.
         Get-aduser -Filter { LastLogonTimeStamp -lt $time -and Enabled -eq $Enabled } -Properties `
@@ -233,7 +227,7 @@ function Get-ActiveUsersAudit {
         if ($SendMailMessage) {
             if ($Password) {
                 <# 
-                Send Attachement using O365 email account and password. 
+                Send Attachement using O365 email account and password.
                 Must exclude from conditional access legacy authentication policies.
                 #> 
                 Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
@@ -241,11 +235,11 @@ function Get-ActiveUsersAudit {
             } # End if
             else {
                 <#
-                Send Attachement using O365 email account and Keyvault retrived password. 
-                Must exclude email account from conditional access legacy authentication policies. 
+                Send Attachement using O365 email account and Keyvault retrived password.
+                Must exclude email account from conditional access legacy authentication policies.
                 #>
                 Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
-                -Function $Function -FunctionApp $FunctionApp -token $ApiToken -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
+                    -Function $Function -FunctionApp $FunctionApp -token $ApiToken -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
             }   # End Else
         }
 
@@ -262,15 +256,15 @@ function Get-ActiveUsersAudit {
             try {
                 # Uninstall Modules 
                 Uninstall-Module -Name "Send-MailKitMessage" -AllowPrerelease -Force -Confirm:$false `
-                    -ErrorAction SilentlyContinue -ErrorVariable UninstallModErr          
+                    -ErrorAction SilentlyContinue -ErrorVariable UninstallModErr
             }
             catch {
                 Write-Output $UninstallModErr -Verbose
             }
         }
-        Clear-Variable -Name "Function","FunctionApp","Password","ApiToken" -Scope Local -ErrorAction SilentlyContinue
+        Clear-Variable -Name "Function", "FunctionApp", "Password", "ApiToken" -Scope Local -ErrorAction SilentlyContinue
         # End Logging
-        Stop-Transcript        
+        Stop-Transcript
         
     }
 }
@@ -303,17 +297,16 @@ function Send-AuditEmail {
     # Mail Account variable
     $User = $username
     if ($pass) {
-        # Set Credential to $Password parameter input. 
+        # Set Credential to $Password parameter input.
         $Credential = $pass
     }
     else {
         $url = "https://$($FunctionApp).azurewebsites.net/api/$($Function)"
         # Retrieve credentials from function app url into a SecureString.
-        $a,$b = (Invoke-RestMethod $url -Headers @{ 'x-functions-key' = "$token" }).split(',')
+        $a, $b = (Invoke-RestMethod $url -Headers @{ 'x-functions-key' = "$token" }).split(',')
         $Credential = `
             [System.Management.Automation.PSCredential]::new($User, (ConvertTo-SecureString -String $a -Key $b.split('')) )
     }
-    
     # Create Parameter hashtable
     $Parameters = @{
         "UseSecureConnectionIfAvailable" = $ssl
@@ -327,5 +320,5 @@ function Send-AuditEmail {
         "AttachmentList"                 = $AttachmentList
     }
     Send-MailKitMessage @Parameters
-    Clear-Variable -Name "a","b","Credential","token" -Scope Local -ErrorAction SilentlyContinue
+    Clear-Variable -Name "a", "b", "Credential", "token" -Scope Local -ErrorAction SilentlyContinue
 }

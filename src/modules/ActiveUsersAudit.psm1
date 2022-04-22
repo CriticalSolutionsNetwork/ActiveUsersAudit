@@ -3,7 +3,7 @@ function Get-ActiveUsersAudit {
     .SYNOPSIS
         Active Directory Audit with Keyvault retrieval option.
     .DESCRIPTION
-        Audit's Active Directory taking "days" as the input for how far back to check for a last sign in. 
+        Audit's Active Directory taking "days" as the input for how far back to check for a last sign in.
     .EXAMPLE
         PS C:\> Get-ActiveUsersAudit -Verbose
     .EXAMPLE

@@ -194,12 +194,11 @@ function Get-ActiveUsersAudit {
     }
     Process {
         # Create CSV Path Prefix
-        $csvPath = "$attachementfolderpath\AD_Export_$($env:USERDNSDOMAIN)"      
-        # Establish timeframe to review.  
+        $csvPath = "$attachementfolderpath\AD_Export_$($env:USERDNSDOMAIN)"
+        # Establish timeframe to review.
         $time = (Get-Date).Adddays( - ($DaysInactive))
         # Add Datetime to filename
         $csv = "$($csvPath).$((Get-Date).ToString('yyyy-MM-dd.hh.mm.ss'))"
-    
         # Audit Script with export to csv and zip. Paramters for Manager, lastLogonTimestamp and DistinguishedName normalized.
         Get-aduser -Filter { LastLogonTimeStamp -lt $time -and Enabled -eq $Enabled } -Properties `
             GivenName, Surname, Mail, UserPrincipalName, Title, OfficePhone, MobilePhone, Description, Manager, lastlogontimestamp, samaccountname, DistinguishedName   | `
@@ -218,18 +217,17 @@ function Get-ActiveUsersAudit {
         @{N = 'OrgUnit'; E = { $($_.DistinguishedName.split(',', 2)[1]) } } `
         | Export-CSV -Path "$csv.csv" -NoTypeInformation
         Compress-Archive -Path "$csv.csv" -DestinationPath "$csv.zip"
-        
         #Confirm output path to console.
-        Write-Output "The archive have been saved to: `n" 
+        Write-Output "The archive have been saved to: `n"
         Write-Output "$csv.zip"
     }
     End {
         if ($SendMailMessage) {
             if ($Password) {
-                <# 
+                <#
                 Send Attachement using O365 email account and password.
                 Must exclude from conditional access legacy authentication policies.
-                #> 
+                #>
                 Send-AuditEmail -smtpServer $SMTPServer -port $Port -username $Username `
                     -pass $Password -from $from -to $to -attachmentfilePath "$csv.zip" -ssl
             } # End if
@@ -252,9 +250,8 @@ function Get-ActiveUsersAudit {
             catch {
                 Write-Output $RemoveModErr -Verbose
             }
-            
             try {
-                # Uninstall Modules 
+                # Uninstall Modules
                 Uninstall-Module -Name "Send-MailKitMessage" -AllowPrerelease -Force -Confirm:$false `
                     -ErrorAction SilentlyContinue -ErrorVariable UninstallModErr
             }
@@ -265,7 +262,6 @@ function Get-ActiveUsersAudit {
         Clear-Variable -Name "Function", "FunctionApp", "Password", "ApiToken" -Scope Local -ErrorAction SilentlyContinue
         # End Logging
         Stop-Transcript
-        
     }
 }
 

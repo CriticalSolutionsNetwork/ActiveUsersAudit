@@ -199,6 +199,7 @@ function Get-ActiveUsersAudit {
         $time = (Get-Date).Adddays( - ($DaysInactive))
         # Add Datetime to filename
         $csv = "$($csvPath).$((Get-Date).ToString('yyyy-MM-dd.hh.mm.ss'))"
+        Write-Output "Searching for users where Enabled = $Enabled"
         # Audit Script with export to csv and zip. Paramters for Manager, lastLogonTimestamp and DistinguishedName normalized.
         Get-aduser -Filter { LastLogonTimeStamp -lt $time -and Enabled -eq $Enabled } -Properties `
             GivenName, Surname, Mail, UserPrincipalName, Title, OfficePhone, MobilePhone, Description, Manager, lastlogontimestamp, samaccountname, DistinguishedName   | `
